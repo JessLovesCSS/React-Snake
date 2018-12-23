@@ -19,9 +19,7 @@ const snakeStyle = {
   width: "10px"
 };
 
-const Gameboard = () => <div style={gameboardStyle} children={<Snake />} />;
-
-class Snake extends React.Component {
+class Gameboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -94,14 +92,23 @@ class Snake extends React.Component {
 
   render() {
     return (
-      <ul onKeyDown={this.updateDirection} tabIndex="0">
-        {this.state.partCoords.map((p, i) => (
-          <SnakePart coords={this.state.partCoords[i]} />
-        ))}
-      </ul>
+      <div
+        onKeyDown={this.updateDirection}
+        style={gameboardStyle}
+        children={<Snake partCoords={this.state.partCoords} />}
+        tabIndex="0"
+      />
     );
   }
 }
+
+const Snake = props => (
+  <ul>
+    {props.partCoords.map((p, i) => (
+      <SnakePart coords={props.partCoords[i]} />
+    ))}
+  </ul>
+);
 
 const SnakePart = props => (
   <li
