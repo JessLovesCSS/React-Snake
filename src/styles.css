@@ -1,4 +1,35 @@
-.App {
-  font-family: sans-serif;
+#gameboard {
+  border: 1px solid #fff;
+  background: #000;
+  height: 310px;
+  position: relative;
+  width: 310px;
+}
+
+#gameboard > span {
+  color: #fff;
+  position: absolute;
+  top: 150px;
   text-align: center;
+  width: 100%;
+}
+
+#snake li {
+  background: #fff;
+  border: 1px solid gray;
+  box-sizing: border-box;
+  display: block;
+  height: 10px;
+  position: absolute;
+  width: 10px;
+}
+
+.apple {
+  background: #f00;
+  border: 1px solid #c00;
+  box-sizing: border-box;
+  display: block;
+  height: 10px;
+  position: absolute;
+  width: 10px;
 }
