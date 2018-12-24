@@ -1,6 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import "./styles.css";
 
 const gameboardStyle = {
   background: "#000",
@@ -19,10 +18,22 @@ const snakeStyle = {
   width: "10px"
 };
 
+const appleStyle = {
+  background: "#f00",
+  border: "1px solid #c00",
+  boxSizing: "border-box",
+  display: "block",
+  height: "10px",
+  position: "absolute",
+  width: "10px"
+};
+
 class Gameboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      addAppleCall: false,
+      applesCoords: [],
       direction: false,
       partCoords: [
         [150, 150],
@@ -33,13 +44,15 @@ class Gameboard extends React.Component {
         [200, 150]
       ]
     };
-    this.coordsInterval = null;
+    this.coordsInterval = false;
     this.updateDirection = this.updateDirection.bind(this);
     this.updateCoords = this.updateCoords.bind(this);
+    this.addApple = this.addApple.bind(this);
+    this.eatApple = this.eatApple.bind(this);
   }
 
   updateDirection(ev) {
-    let evkc = ev.keyCode,
+    const evkc = ev.keyCode,
       sd = this.state.direction || 41;
     if (
       (evkc === 37 && sd !== 39) ||
@@ -52,15 +65,14 @@ class Gameboard extends React.Component {
         () => ({
           direction: evkc
         }),
-        () => {
-          this.coordsInterval = setInterval(this.updateCoords, 66);
-        }
+        () => (this.coordsInterval = setInterval(this.updateCoords, 66))
       );
     }
   }
 
   updateCoords() {
-    let updatedCoords = [];
+    const updatedCoords = [];
+    this.eatApple();
     this.state.partCoords.forEach((el, i) => {
       if (i === 0) {
         let tspi = this.state.partCoords[i];
@@ -90,17 +102,78 @@ class Gameboard extends React.Component {
     }));
   }
 
+  addApple() {
+    const m = Math;
+    const randAppleCoord = () => m.floor(m.random() * 31) * 10;
+    const randApple = () => [randAppleCoord(), randAppleCoord()];
+    const getUniqueApple = ra => {
+      if (typeof ra === "undefined") {
+        ra = randApple();
+      }
+      if (
+        this.state.applesCoords.some(
+          arr => arr[0] === ra[0] && arr[1] === ra[1]
+        ) ||
+        this.state.partCoords.some(arr => arr[0] === ra[0] && arr[1] === ra[1])
+      )
+        return getUniqueApple(randApple());
+      return ra;
+    };
+    this.appleCall = setInterval(() => {
+      this.setState(() => ({
+        applesCoords: [...this.state.applesCoords, getUniqueApple()]
+      }));
+    }, 3000);
+  }
+
+  eatApple() {
+    let updatedApplesCoords = [];
+    this.state.applesCoords.forEach((apple, appleIndex) => {
+      if (
+        apple[0] === this.state.partCoords[0][0] &&
+        apple[1] === this.state.partCoords[0][1]
+      ) {
+        updatedApplesCoords = this.state.applesCoords.filter(
+          (a, ai) => ai !== appleIndex
+        );
+        this.setState(() => ({
+          applesCoords: updatedApplesCoords
+        }));
+      }
+    });
+  }
+
+  componentDidUpdate() {
+    if (!this.state.addAppleCall) {
+      this.setState(() => ({
+        addAppleCall: true
+      }));
+      this.addApple();
+    }
+  }
+
   render() {
     return (
-      <div
-        onKeyDown={this.updateDirection}
-        style={gameboardStyle}
-        children={<Snake partCoords={this.state.partCoords} />}
-        tabIndex="0"
-      />
+      <div onKeyDown={this.updateDirection} style={gameboardStyle} tabIndex="0">
+        {this.state.applesCoords.map((a, i) => (
+          <Apple coords={this.state.applesCoords[i]} />
+        ))}
+        <Snake partCoords={this.state.partCoords} />
+      </div>
     );
   }
 }
+
+const Apple = props => (
+  <div
+    className="apple"
+    style={{
+      ...appleStyle,
+      top: props.coords[0],
+      left: props.coords[1]
+    }}
+  />
+);
 
 const Snake = props => (
   <ul>
