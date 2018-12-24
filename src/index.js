@@ -1,32 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-
-const gameboardStyle = {
-  background: "#000",
-  height: "310px",
-  position: "relative",
-  width: "310px"
-};
-
-const snakeStyle = {
-  background: "#fff",
-  border: "1px solid gray",
-  boxSizing: "border-box",
-  display: "block",
-  height: "10px",
-  position: "absolute",
-  width: "10px"
-};
-
-const appleStyle = {
-  background: "#f00",
-  border: "1px solid #c00",
-  boxSizing: "border-box",
-  display: "block",
-  height: "10px",
-  position: "absolute",
-  width: "10px"
-};
+import "./styles.css";
 
 class Gameboard extends React.Component {
   constructor(props) {
@@ -35,20 +9,17 @@ class Gameboard extends React.Component {
       addAppleCall: false,
       applesCoords: [],
       direction: false,
-      partCoords: [
-        [150, 150],
-        [160, 150],
-        [170, 150],
-        [180, 150],
-        [190, 150],
-        [200, 150]
-      ]
+      gameOver: false,
+      partCoords: [[150, 150], [160, 150], [170, 150], [180, 150], [190, 150]]
     };
     this.coordsInterval = false;
     this.updateDirection = this.updateDirection.bind(this);
     this.updateCoords = this.updateCoords.bind(this);
     this.addApple = this.addApple.bind(this);
     this.eatApple = this.eatApple.bind(this);
+    this.addPart = this.addPart.bind(this);
+    this.snakeEater = this.snakeEater.bind(this);
+    this.playableGameboard = this.playableGameboard.bind(this);
   }
 
   updateDirection(ev) {
@@ -100,6 +71,7 @@ class Gameboard extends React.Component {
     this.setState(() => ({
       partCoords: updatedCoords
     }));
+    this.snakeEater();
   }
 
   addApple() {
@@ -119,7 +91,7 @@ class Gameboard extends React.Component {
         return getUniqueApple(randApple());
       return ra;
     };
-    this.appleCall = setInterval(() => {
+    setInterval(() => {
       this.setState(() => ({
         applesCoords: [...this.state.applesCoords, getUniqueApple()]
       }));
@@ -139,6 +111,28 @@ class Gameboard extends React.Component {
         this.setState(() => ({
           applesCoords: updatedApplesCoords
         }));
+        this.addPart();
+      }
+    });
+  }
+
+  addPart() {
+    let partCoords = this.state.partCoords;
+    let updateCoords = [...partCoords, partCoords[partCoords.length - 1]];
+    this.setState(() => ({
+      partCoords: updateCoords
+    }));
+  }
+
+  snakeEater() {
+    let partCoords = this.state.partCoords;
+    partCoords.forEach((p, i) => {
+      if (i !== 0) {
+        if (partCoords[0][0] === p[0] && partCoords[0][1] === p[1]) {
+          this.setState(() => ({
+            gameOver: true
+          }));
+        }
       }
     });
   }
@@ -152,14 +146,28 @@ class Gameboard extends React.Component {
     }
   }
 
-  render() {
+  playableGameboard() {
     return (
-      <div onKeyDown={this.updateDirection} style={gameboardStyle} tabIndex="0">
+      <div id="gameboard" onKeyDown={this.updateDirection} tabIndex="0">
         {this.state.applesCoords.map((a, i) => (
           <Apple coords={this.state.applesCoords[i]} />
         ))}
         <Snake partCoords={this.state.partCoords} />
       </div>
+    );
+  }
+
+  render() {
+    return this.state.gameOver ? (
+      <div id="gameboard">
+        <span>
+          You ate yourself
+          <br />
+          Game Over
+        </span>
+      </div>
+    ) : (
+      this.playableGameboard()
     );
   }
 }
@@ -168,7 +176,6 @@ const Apple = props => (
   <div
     className="apple"
     style={{
-      ...appleStyle,
       top: props.coords[0],
       left: props.coords[1]
     }}
@@ -176,7 +183,7 @@ const Apple = props => (
 );
 
 const Snake = props => (
-  <ul>
+  <ul id="snake">
     {props.partCoords.map((p, i) => (
       <SnakePart coords={props.partCoords[i]} />
     ))}
@@ -186,7 +193,6 @@ const Snake = props => (
 const SnakePart = props => (
   <li
     style={{
-      ...snakeStyle,
       top: props.coords[0],
       left: props.coords[1]
     }}
