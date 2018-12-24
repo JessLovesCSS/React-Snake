@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./styles.css";
 
-class Gameboard extends React.Component {
+class SnakeGame extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -10,7 +10,7 @@ class Gameboard extends React.Component {
       applesCoords: [],
       direction: false,
       gameOver: false,
-      partCoords: [[150, 150], [160, 150], [170, 150], [180, 150], [190, 150]]
+      snakeCoords: [[150, 150], [160, 150], [170, 150], [180, 150], [190, 150]]
     };
     this.coordsInterval = false;
     this.updateDirection = this.updateDirection.bind(this);
@@ -19,12 +19,11 @@ class Gameboard extends React.Component {
     this.eatApple = this.eatApple.bind(this);
     this.addPart = this.addPart.bind(this);
     this.snakeEater = this.snakeEater.bind(this);
-    this.playableGameboard = this.playableGameboard.bind(this);
   }
 
   updateDirection(ev) {
     const evkc = ev.keyCode,
-      sd = this.state.direction || 41;
+      sd = this.state.direction || 0;
     if (
       (evkc === 37 && sd !== 39) ||
       (evkc === 38 && sd !== 40) ||
@@ -44,9 +43,9 @@ class Gameboard extends React.Component {
   updateCoords() {
     const updatedCoords = [];
     this.eatApple();
-    this.state.partCoords.forEach((el, i) => {
+    this.state.snakeCoords.forEach((el, i) => {
       if (i === 0) {
-        let tspi = this.state.partCoords[i];
+        let tspi = this.state.snakeCoords[i];
         switch (this.state.direction) {
           case 37:
             updatedCoords.push([tspi[0], tspi[1] >= 10 ? tspi[1] - 10 : 300]);
@@ -64,12 +63,12 @@ class Gameboard extends React.Component {
             break;
         }
       } else {
-        updatedCoords.push(this.state.partCoords[i - 1]);
+        updatedCoords.push(this.state.snakeCoords[i - 1]);
       }
     });
 
     this.setState(() => ({
-      partCoords: updatedCoords
+      snakeCoords: updatedCoords
     }));
     this.snakeEater();
   }
@@ -86,7 +85,7 @@ class Gameboard extends React.Component {
         this.state.applesCoords.some(
           arr => arr[0] === ra[0] && arr[1] === ra[1]
         ) ||
-        this.state.partCoords.some(arr => arr[0] === ra[0] && arr[1] === ra[1])
+        this.state.snakeCoords.some(arr => arr[0] === ra[0] && arr[1] === ra[1])
       )
         return getUniqueApple(randApple());
       return ra;
@@ -102,8 +101,8 @@ class Gameboard extends React.Component {
     let updatedApplesCoords = [];
     this.state.applesCoords.forEach((apple, appleIndex) => {
       if (
-        apple[0] === this.state.partCoords[0][0] &&
-        apple[1] === this.state.partCoords[0][1]
+        apple[0] === this.state.snakeCoords[0][0] &&
+        apple[1] === this.state.snakeCoords[0][1]
       ) {
         updatedApplesCoords = this.state.applesCoords.filter(
           (a, ai) => ai !== appleIndex
@@ -117,18 +116,18 @@ class Gameboard extends React.Component {
   }
 
   addPart() {
-    let partCoords = this.state.partCoords;
-    let updateCoords = [...partCoords, partCoords[partCoords.length - 1]];
+    let partsCoords = this.state.snakeCoords;
+    let updateCoords = [...partsCoords, partsCoords[partsCoords.length - 1]];
     this.setState(() => ({
-      partCoords: updateCoords
+      snakeCoords: updateCoords
     }));
   }
 
   snakeEater() {
-    let partCoords = this.state.partCoords;
-    partCoords.forEach((p, i) => {
+    let partsCoords = this.state.snakeCoords;
+    partsCoords.forEach((p, i) => {
       if (i !== 0) {
-        if (partCoords[0][0] === p[0] && partCoords[0][1] === p[1]) {
+        if (partsCoords[0][0] === p[0] && partsCoords[0][1] === p[1]) {
           this.setState(() => ({
             gameOver: true
           }));
@@ -146,31 +145,35 @@ class Gameboard extends React.Component {
     }
   }
 
-  playableGameboard() {
-    return (
-      <div id="gameboard" onKeyDown={this.updateDirection} tabIndex="0">
-        {this.state.applesCoords.map((a, i) => (
-          <Apple coords={this.state.applesCoords[i]} />
-        ))}
-        <Snake partCoords={this.state.partCoords} />
-      </div>
-    );
-  }
-
   render() {
-    return this.state.gameOver ? (
-      <div id="gameboard">
-        <span>
-          You ate yourself
-          <br />
-          Game Over
-        </span>
-      </div>
-    ) : (
-      this.playableGameboard()
+    return (
+      <Gameboard
+        applesCoords={this.state.applesCoords}
+        gameOver={this.state.gameOver}
+        snakeCoords={this.state.snakeCoords}
+        updateDirection={this.updateDirection}
+      />
     );
   }
 }
+
+const Gameboard = props =>
+  props.gameOver ? (
+    <div id="gameboard">
+      <span>
+        you ate yourself
+        <br />
+        Game Over
+      </span>
+    </div>
+  ) : (
+    <div id="gameboard" onKeyDown={props.updateDirection} tabIndex="0">
+      {props.applesCoords.map((a, i) => (
+        <Apple coords={props.applesCoords[i]} />
+      ))}
+      <Snake partsCoords={props.snakeCoords} />
+    </div>
+  );
 
 const Apple = props => (
   <div
@@ -184,8 +187,8 @@ const Apple = props => (
 
 const Snake = props => (
   <ul id="snake">
-    {props.partCoords.map((p, i) => (
-      <SnakePart coords={props.partCoords[i]} />
+    {props.partsCoords.map((p, i) => (
+      <SnakePart partCoords={props.partsCoords[i]} />
     ))}
   </ul>
 );
@@ -193,15 +196,11 @@ const Snake = props => (
 const SnakePart = props => (
   <li
     style={{
-      top: props.coords[0],
-      left: props.coords[1]
+      top: props.partCoords[0],
+      left: props.partCoords[1]
     }}
   />
 );
-
-function SnakeGame() {
-  return <Gameboard />;
-}
 
 const rootElement = document.getElementById("root");
 ReactDOM.render(<SnakeGame />, rootElement);
