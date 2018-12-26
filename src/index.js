@@ -77,6 +77,7 @@ class SnakeGame extends React.Component {
     const m = Math;
     const randAppleCoord = () => m.floor(m.random() * 31) * 10;
     const randApple = () => [randAppleCoord(), randAppleCoord()];
+    const randAppleTimeout = () => m.floor(m.max(1000, m.random() * 3500));
     const getUniqueApple = ra => {
       if (typeof ra === "undefined") {
         ra = randApple();
@@ -90,11 +91,17 @@ class SnakeGame extends React.Component {
         return getUniqueApple(randApple());
       return ra;
     };
-    setInterval(() => {
-      this.setState(() => ({
-        applesCoords: [...this.state.applesCoords, getUniqueApple()]
-      }));
-    }, 3000);
+    const appleUpdate = () => {
+      setTimeout(() => {
+        this.setState(
+          () => ({
+            applesCoords: [...this.state.applesCoords, getUniqueApple()]
+          }),
+          appleUpdate
+        );
+      }, randAppleTimeout());
+    };
+    appleUpdate();
   }
 
   eatApple() {
